@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+
+<html lang="hu">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Social Media Analitika Dashboard</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+
+    /* Reset és Alapok */
+
+    body {
+
+      margin: 0;
+
+      font-family: 'Inter', sans-serif;
+
+      background-color: #1a1a2e; /* Mélyebb, sötétkék háttér */
+
+      color: #e4e6eb;
+
+      display: flex;
+
+      flex-direction: column;
+
+      min-height: 100vh;
+
+      line-height: 1.6;
+
+    }
+
+
+
+    /* Fő tartalom */
+
+    main {
+
+      flex-grow: 1;
+
+      padding: 3rem;
+
+      display: grid;
+
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+
+      gap: 2.5rem;
+
+      align-content: start;
+
+      max-width: 1400px;
+
+      margin: 0 auto;
+
+      width: 100%;
+
+    }
+
+
+
+    /* Kártyák (Chart Card) */
+
+    .chart-card {
+
+      background-color: #2c2c54;
+
+      border-radius: 12px;
+
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+
+      padding: 1.8rem;
+
+      transition: transform 0.4s ease-out, box-shadow 0.4s ease-out;
+
+      border: 1px solid #3d3d66;
+
+    }
+
+
+
+    .chart-card:hover {
+
+      transform: translateY(-8px) scale(1.02);
+
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+
+      cursor: pointer;
+
+    }
+
+
+
+    h2 {
+
+      text-align: center;
+
+      font-size: 1.5rem;
+
+      color: #6c5ce7; /* Lila címkiemelés */
+
+      margin-bottom: 0.5rem;
+
+      font-weight: 600;
+
+    }
+
+   
+
+    .chart-description {
+
+        text-align: center;
+
+        color: #a4b0be;
+
+        font-size: 0.95rem;
+
+        margin-bottom: 1.5rem;
+
+        font-style: italic;
+
+    }
+
+
+
+    /* Header */
+
+    header {
+
+      background-color: #16213e;
+
+      padding: 1.5rem 3rem;
+
+      text-align: center;
+
+      color: #e4e6eb;
+
+      font-size: 1.8rem;
+
+      font-weight: 700;
+
+      font-family: 'Inter', sans-serif;
+
+      box-shadow: 0 2px 8px rgba(0,0,0,0.7);
+
+    }
+
+
+
+    /* Lábléc */
+
+    footer {
+
+      text-align: center;
+
+      padding: 1.5rem;
+
+      color: #8395a7;
+
+      font-size: 0.8rem;
+
+      margin-top: auto;
+
+      background-color: #16213e;
+
+      font-family: 'Inter', sans-serif;
+
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.7);
+
+    }
+
+   
+
+    @media (max-width: 900px) {
+
+      main {
+
+        padding: 1.5rem;
+
+        grid-template-columns: 1fr;
+
+      }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<header>Social Media</header>
+
+<main>
+
+  <div class="chart-card">
+
+    <h2>📈 Átlagos felhasználói növekedés</h2>
+
+    <p class="chart-description">A social media (Facebook, TikTok, Instagram) felhasználók átlagos éves növekedése 2021 és 2024 között (milliárd fő).</p>
+
+    <canvas id="growthChart"></canvas>
+
+  </div>
+
+
+
+  <div class="chart-card">
+
+    <h2>📊 Platform-összehasonlítás</h2>
+
+    <p class="chart-description">A Facebook, Instagram és TikTok éves felhasználószámának összehasonlítása (milliárd fő).</p>
+
+    <canvas id="barChart"></canvas>
+
+  </div>
+
+
+
+  <div class="chart-card">
+
+    <h2>👥 Korosztályi megoszlás</h2>
+
+    <p class="chart-description">A social media (FB, Insta, TikTok) felhasználók korosztály szerinti megoszlása (%).</p>
+
+    <canvas id="ageChart"></canvas>
+
+  </div>
+
+</main>
+
+
+
+<footer>© 2025 </footer>
+
+
+
+<script>
+
+  // RELEVÁNS ÉS FRISSÍTETT ADATOK (Felhasználók milliárd főben)
+
+  const dataByYear = {
+
+    // 1. Line Chart adatai (Facebook, TikTok, Instagram átlaga)
+
+    2021: { users_avg: 3.0 },
+
+    2022: { users_avg: 3.7 },
+
+    2023: { users_avg: 4.3 },
+
+    2024: { users_avg: 4.7 },
+
+   
+
+    // 2. Bar Chart adatai: FB, Insta, TikTok éves felhasználói bázisa (milliárd fő)
+
+    platforms: {
+
+        Facebook: [2.8, 2.95, 3.05, 3.1],
+
+        Instagram: [1.3, 1.6, 1.8, 2.0],
+
+        TikTok: [1.0, 1.4, 1.7, 1.9],
+
+    },
+
+
+
+    // 3. ÚJ ADATOK: Korosztályi megoszlás (átlagos arány %-ban)
+
+    ageGroups: {
+
+        '18-24': [35, 38, 36, 33], // A fiatalabbak aránya nőtt, majd stabilizálódott/csökkent
+
+        '25-34': [25, 24, 26, 28], // Stabil, enyhe növekedés
+
+        '35-49': [20, 18, 19, 21], // Stabil
+
+        '50+':   [20, 20, 19, 18]  // Enyhe csökkenés (összességében 100% közelében)
+
+    }
+
+  };
+
+
+
+  const years = ['2021', '2022', '2023', '2024'];
+
+  const barChartLabels = ['Facebook', 'Instagram', 'TikTok'];
+
+  const ageLabels = ['18-24 év', '25-34 év', '35-49 év', '50+ év'];
+
+ 
+
+  // Színpaletta (kibővítve a korosztályokhoz)
+
+  const colors = {
+
+      // Évek
+
+      2021: { main: '#a29bfe', bg: 'rgba(162,155,254,0.3)' },
+
+      2022: { main: '#74b9ff', bg: 'rgba(116,185,255,0.3)' },
+
+      2023: { main: '#0984e3', bg: 'rgba(9,132,227,0.3)' },  
+
+      2024: { main: '#00b894', bg: 'rgba(0,184,148,0.3)' },
+
+     
+
+      // Platformok
+
+      Facebook: '#0984e3',
+
+      Instagram: '#a29bfe',
+
+      TikTok: '#00b894',
+
+
+
+      // Korosztályok
+
+      '18-24': '#ff7675', // Pirosas
+
+      '25-34': '#fdcb6e', // Sárgás
+
+      '35-49': '#55efc4', // Világoszöld
+
+      '50+':   '#81ecec', // Kékeszöld
+
+  };
+
+ 
+
+  // Globális Chart.js opciók (változatlan)
+
+  const chartGlobalOptions = {
+
+    responsive: true,
+
+    maintainAspectRatio: true,
+
+    plugins: {
+
+        legend: {
+
+            labels: {
+
+                color: '#a4b0be',
+
+                font: { size: 14 }
+
+            }
+
+        }
+
+    },
+
+    scales: {
+
+        x: {
+
+            grid: { color: 'rgba(255, 255, 255, 0.08)' },
+
+            ticks: { color: '#e4e6eb' }
+
+        },
+
+        y: {
+
+            grid: { color: 'rgba(255, 255, 255, 0.08)' },
+
+            ticks: { color: '#e4e6eb' }
+
+        }
+
+    }
+
+  };
+
+
+
+  // --- 1. Átlagos felhasználói növekedés (Line Chart) ---
+
+  const ctx1 = document.getElementById('growthChart');
+
+  const growthChart = new Chart(ctx1, {
+
+    type: 'line',
+
+    data: {
+
+      labels: years,
+
+      datasets: [{
+
+          label: 'Átlagos felhasználók (milliárd)',
+
+          data: years.map(year => dataByYear[year].users_avg),
+
+          borderColor: '#0984e3',
+
+          backgroundColor: 'rgba(9,132,227,0.3)',
+
+          fill: true,
+
+          tension: 0.4,
+
+          borderWidth: 3
+
+      }]
+
+    },
+
+    options: {
+
+        ...chartGlobalOptions,
+
+        scales: {
+
+            x: {
+
+                ...chartGlobalOptions.scales.x,
+
+                title: { display: true, text: 'Év', color: '#a4b0be' }
+
+            },
+
+            y: {
+
+                ...chartGlobalOptions.scales.y,
+
+                title: { display: true, text: 'Felhasználók száma (milliárd)', color: '#a4b0be' }
+
+            }
+
+        }
+
+    }
+
+  });
+
+
+
+  // --- 2. Platform-összehasonlítás (Bar Chart) ---
+
+  const ctx2 = document.getElementById('barChart');
+
+  const barChart = new Chart(ctx2, {
+
+    type: 'bar',
+
+    data: {
+
+      labels: years,
+
+      datasets: [
+
+        { label: 'Facebook', data: dataByYear.platforms.Facebook, backgroundColor: colors.Facebook, borderColor: colors.Facebook, borderWidth: 1 },
+
+        { label: 'Instagram', data: dataByYear.platforms.Instagram, backgroundColor: colors.Instagram, borderColor: colors.Instagram, borderWidth: 1 },
+
+        { label: 'TikTok', data: dataByYear.platforms.TikTok, backgroundColor: colors.TikTok, borderColor: colors.TikTok, borderWidth: 1 }
+
+      ]
+
+    },
+
+    options: {
+
+        ...chartGlobalOptions,
+
+        scales: {
+
+            x: {
+
+                ...chartGlobalOptions.scales.x,
+
+                title: { display: true, text: 'Év', color: '#a4b0be' }
+
+            },
+
+            y: {
+
+                ...chartGlobalOptions.scales.y,
+
+                max: 3.5,
+
+                grid: { color: 'rgba(255, 255, 255, 0.08)' },
+
+                title: {
+
+                    display: true,
+
+                    text: 'Felhasználók száma (milliárd)',
+
+                    color: '#a4b0be'
+
+                }
+
+            }
+
+        }
+
+    }
+
+  });
+
+
+
+  // --- 3. Korosztályi megoszlás (Stacked Bar Chart) ---
+
+  const ctx3 = document.getElementById('ageChart'); // Az azonosítót ageChart-ra cseréltem
+
+  const ageChart = new Chart(ctx3, {
+
+    type: 'bar',
+
+    data: {
+
+      labels: years, // X tengely: Évek
+
+      datasets: ageLabels.map((age, index) => ({
+
+          label: age,
+
+          data: dataByYear.ageGroups[age.replace(' év', '')], // Adatok a korosztálynak megfelelően
+
+          backgroundColor: colors[age.replace(' év', '')],
+
+          borderColor: '#1a1a2e', // Sötét szegély a halmozott részek elválasztásához
+
+          borderWidth: 1.5,
+
+      }))
+
+    },
+
+    options: {
+
+        ...chartGlobalOptions,
+
+        scales: {
+
+            x: {
+
+                ...chartGlobalOptions.scales.x,
+
+                stacked: true, // Halmozott diagram
+
+                title: { display: true, text: 'Év', color: '#a4b0be' }
+
+            },
+
+            y: {
+
+                ...chartGlobalOptions.scales.y,
+
+                stacked: true, // Halmozott diagram
+
+                min: 0,
+
+                max: 100, // Maximális érték 100%
+
+                ticks: {
+
+                    callback: function(value) { return value + '%'; }, // % jel hozzáadása
+
+                    color: '#e4e6eb'
+
+                },
+
+                title: {
+
+                    display: true,
+
+                    text: 'Felhasználók aránya (%)',
+
+                    color: '#a4b0be'
+
+                }
+
+            }
+
+        }
+
+    }
+
+  });
+
+</script>
+
+
+
+</body>
+
+</html>
