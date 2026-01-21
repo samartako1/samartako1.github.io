@@ -4,19 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Social Media Analytics Dashboard</title>
+
+  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body { margin: 0; font-family: 'Inter', sans-serif; background-color: #1a1a2e; color: #e4e6eb; display: flex; flex-direction: column; min-height: 100vh; }
-    header { background-color: #16213e; padding: 1.5rem; text-align: center; font-size: 1.8rem; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.7); }
-    
-    /* DASHBOARD RÁCS ELRENDEZÉS */
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #1a1a2e;
+      color: #e4e6eb;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #16213e;
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.7);
+    }
+
     main {
       flex-grow: 1;
       padding: 2rem;
       display: grid;
-      /* Két egyforma oszlopot hozunk létre */
-      grid-template-columns: repeat(2, 1fr); 
+      grid-template-columns: repeat(2, 1fr);
       gap: 2rem;
       max-width: 1400px;
       margin: 0 auto;
@@ -34,40 +53,72 @@
       flex-direction: column;
     }
 
-    /* A választó és a nagy diagram teljes szélességű (2 oszlopot foglal el) */
     .full-width {
       grid-column: span 2;
     }
 
-    /* Fix magasság a grafikonoknak, hogy egyformák legyenek */
     .chart-container {
       position: relative;
       height: 350px;
       width: 100%;
     }
 
-    select { padding: 10px 20px; border-radius: 8px; background: #2c2c54; color: white; border: 1px solid #6c5ce7; cursor: pointer; }
-    h2 { text-align: center; color: #6c5ce7; font-size: 1.4rem; margin-top: 0; }
-    .chart-description { text-align: center; color: #a4b0be; font-size: 0.9rem; font-style: italic; margin-bottom: 1.5rem; }
-    footer { text-align: center; padding: 1.5rem; background-color: #16213e; color: #8395a7; font-size: 0.8rem; }
+    select {
+      padding: 10px 20px;
+      border-radius: 8px;
+      background: #2c2c54;
+      color: white;
+      border: 1px solid #6c5ce7;
+      cursor: pointer;
+    }
 
-    /* Mobilnézet: egymás alá rakja őket */
+    h2 {
+      text-align: center;
+      color: #6c5ce7;
+      font-size: 1.4rem;
+      margin-top: 0;
+    }
+
+    .chart-description {
+      text-align: center;
+      color: #a4b0be;
+      font-size: 0.9rem;
+      font-style: italic;
+      margin-bottom: 1.5rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      background-color: #16213e;
+      color: #8395a7;
+      font-size: 0.8rem;
+    }
+
     @media (max-width: 900px) {
-      main { grid-template-columns: 1fr; }
-      .full-width { grid-column: span 1; }
+      main {
+        grid-template-columns: 1fr;
+      }
+      .full-width {
+        grid-column: span 1;
+      }
     }
   </style>
 </head>
+
 <body>
 
 <header>Social Media Analytics Dashboard</header>
 
 <main>
+
+  <!-- ORSZÁG VÁLASZTÓ -->
   <div class="chart-card full-width" style="flex-direction: row; justify-content: center; gap: 20px; padding: 1rem; background: #16213e;">
     <label style="font-weight: 600; align-self: center;">Ország kiválasztása:</label>
     <select id="countrySelect"></select>
   </div>
 
+  <!-- NAGY VONALDIAGRAM -->
   <div class="chart-card full-width">
     <h2>📈 Közösségi média használat trendje (%)</h2>
     <p class="chart-description">Lakossági részvétel az évek során (Eurostat)</p>
@@ -76,6 +127,7 @@
     </div>
   </div>
 
+  <!-- KOROSZTÁLY -->
   <div class="chart-card">
     <h2>👥 Korosztályi megoszlás (2023)</h2>
     <p class="chart-description">Használati arány generációnként</p>
@@ -84,6 +136,7 @@
     </div>
   </div>
 
+  <!-- FOGLALKOZTATÁS -->
   <div class="chart-card">
     <h2>💼 Foglalkoztatási státusz (2023)</h2>
     <p class="chart-description">Használat diákok, dolgozók és nyugdíjasok körében</p>
@@ -91,86 +144,136 @@
       <canvas id="employmentChart"></canvas>
     </div>
   </div>
+
 </main>
 
 <footer>© 2026 Social Media Dashboard | Adatok: Eurostat</footer>
 
 <script>
   let charts = {};
-  let db = { growth: {}, age: {}, employment: {} };
+  let db = {
+    growth: {},
+    age: {},
+    employment: {}
+  };
   let years = [];
 
-  // Adatok beolvasása (3 CSV fájl)
+  /* CSV fájlok betöltése – JAVÍTVA */
   Promise.all([
-    fetch('eurostat_social_media.csv').then(r => r.text()),
-    fetch('eurostat_age_groups.csv').then(r => r.text()),
-    fetch('eurostat_employment.csv').then(r => r.text())
-  ]).then(([csvG, csvA, csvE]) => {
-    // Növekedési adatok + Select feltöltése
-    const gLines = csvG.trim().split('\n');
-    years = gLines[0].split(',').slice(1);
+    fetch('./eurostat_social_media.csv').then(r => r.text()),
+    fetch('./eurostat_age_groups.csv').then(r => r.text()),
+    fetch('./eurostat_employment.csv').then(r => r.text())
+  ]).then(([csvGrowth, csvAge, csvEmployment]) => {
+
+    /* NÖVEKEDÉSI ADATOK + SELECT */
+    const lines = csvGrowth.trim().split('\n');
+    years = lines[0].split(',').slice(1);
+
     const select = document.getElementById('countrySelect');
-    gLines.slice(1).forEach(l => {
-      const p = l.split(',');
-      db.growth[p[0]] = p.slice(1).map(Number);
-      let opt = document.createElement('option');
-      opt.value = p[0]; opt.innerHTML = p[0];
-      if(p[0] === "Hungary") opt.selected = true;
-      select.appendChild(opt);
+
+    lines.slice(1).forEach(line => {
+      const parts = line.split(',');
+      const country = parts[0];
+
+      db.growth[country] = parts.slice(1).map(Number);
+
+      const option = document.createElement('option');
+      option.value = country;
+      option.textContent = country;
+
+      if (country === 'Hungary') option.selected = true;
+
+      select.appendChild(option);
     });
 
-    // Korosztályi adatok
-    csvA.trim().split('\n').slice(1).forEach(l => {
-      const p = l.split(',');
+    /* KOROSZTÁLY */
+    csvAge.trim().split('\n').slice(1).forEach(line => {
+      const p = line.split(',');
       db.age[p[0]] = p.slice(1).map(Number);
     });
 
-    // Foglalkoztatási adatok
-    csvE.trim().split('\n').slice(1).forEach(l => {
-      const p = l.split(',');
+    /* FOGLALKOZTATÁS */
+    csvEmployment.trim().split('\n').slice(1).forEach(line => {
+      const p = line.split(',');
       db.employment[p[0]] = p.slice(1).map(Number);
     });
 
-    updateDashboard("Hungary");
-    select.addEventListener('change', (e) => updateDashboard(e.target.value));
+    updateDashboard('Hungary');
+    select.addEventListener('change', e => updateDashboard(e.target.value));
   });
 
   function updateDashboard(country) {
-    // 1. Line Chart (Nagy)
-    render('growthChart', 'line', years, [{
-      label: country + ' (%)', data: db.growth[country],
-      borderColor: '#6c5ce7', backgroundColor: 'rgba(108, 92, 231, 0.2)', fill: true, tension: 0.4
-    }]);
 
-    // 2. Age Bar Chart (Kicsi 1)
-    render('ageChart', 'bar', ['16-24 év', '25-34 év', '35-44 év', '55-74 év'], [{
-      label: 'Használat (%)', data: db.age[country],
-      backgroundColor: ['#ff7675', '#fdcb6e', '#55efc4', '#81ecec']
-    }]);
+    renderChart(
+      'growthChart',
+      'line',
+      years,
+      [{
+        label: country + ' (%)',
+        data: db.growth[country],
+        borderColor: '#6c5ce7',
+        backgroundColor: 'rgba(108, 92, 231, 0.25)',
+        fill: true,
+        tension: 0.4
+      }]
+    );
 
-    // 3. Employment Bar Chart (Kicsi 2)
-    render('employmentChart', 'bar', ['Diák', 'Alkalmazott', 'Munkanélküli', 'Nyugdíjas'], [{
-      label: 'Használat (%)', data: db.employment[country],
-      backgroundColor: ['#a29bfe', '#74b9ff', '#fab1a0', '#ffeaa7']
-    }]);
+    renderChart(
+      'ageChart',
+      'bar',
+      ['16-24 év', '25-34 év', '35-44 év', '55-74 év'],
+      [{
+        label: 'Használat (%)',
+        data: db.age[country],
+        backgroundColor: ['#ff7675', '#fdcb6e', '#55efc4', '#81ecec']
+      }]
+    );
+
+    renderChart(
+      'employmentChart',
+      'bar',
+      ['Diák', 'Alkalmazott', 'Munkanélküli', 'Nyugdíjas'],
+      [{
+        label: 'Használat (%)',
+        data: db.employment[country],
+        backgroundColor: ['#a29bfe', '#74b9ff', '#fab1a0', '#ffeaa7']
+      }]
+    );
   }
 
-  function render(id, type, labels, datasets) {
+  function renderChart(id, type, labels, datasets) {
     if (charts[id]) charts[id].destroy();
+
     charts[id] = new Chart(document.getElementById(id), {
       type: type,
-      data: { labels: labels, datasets: datasets },
+      data: { labels, datasets },
       options: {
         responsive: true,
-        maintainAspectRatio: false, // Ez biztosítja, hogy kitöltse a konténert
-        plugins: { legend: { labels: { color: '#e4e6eb' } } },
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: '#e4e6eb' }
+          }
+        },
         scales: {
-          y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#e4e6eb', callback: v => v+'%' } },
-          x: { ticks: { color: '#e4e6eb' }, grid: { color: 'rgba(255,255,255,0.08)' } }
+          y: {
+            min: 0,
+            max: 100,
+            ticks: {
+              color: '#e4e6eb',
+              callback: value => value + '%'
+            },
+            grid: { color: 'rgba(255,255,255,0.08)' }
+          },
+          x: {
+            ticks: { color: '#e4e6eb' },
+            grid: { color: 'rgba(255,255,255,0.08)' }
+          }
         }
       }
     });
   }
 </script>
+
 </body>
 </html>
